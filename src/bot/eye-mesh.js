@@ -31,6 +31,7 @@ export class EyeMesh {
     this._t = new THREE.Vector3();
     this._b = new THREE.Vector3();
     this._n = new THREE.Vector3();
+    this._pn = new THREE.Vector3(); // 各点自身球面法线
     this._p = new THREE.Vector3();
     this._pos = this.geometry.attributes.position;
     this._nor = this.geometry.attributes.normal;
@@ -98,10 +99,12 @@ export class EyeMesh {
       this._disk.copy(center).addScaledVector(tAxis, u).addScaledVector(bAxis, v);
       this._dir.copy(this._disk).sub(faceCenter).normalize();
       this._p.copy(this._dir).multiplyScalar(FACE_RADIUS);
-      // 顶面顶点（凸起），法线用真实曲面法线（更圆润的光照）
+      // 该点自身的球面法线（贴合球面，大表情/拉长眼睛边缘不再穿模）
+      this._pn.copy(this._p).sub(faceCenter).normalize();
+      // 顶面顶点（沿自身法线凸起），法线用真实曲面法线（更圆润的光照）
       const topIdx = 1 + i;
-      pos.setXYZ(topIdx, this._p.x + nAxis.x * thick, this._p.y + nAxis.y * thick, this._p.z + nAxis.z * thick);
-      this._dir.copy(this._p).addScaledVector(nAxis, thick).sub(faceCenter).normalize();
+      pos.setXYZ(topIdx, this._p.x + this._pn.x * thick, this._p.y + this._pn.y * thick, this._p.z + this._pn.z * thick);
+      this._dir.copy(this._p).addScaledVector(this._pn, thick).sub(faceCenter).normalize();
       nor.setXYZ(topIdx, this._dir.x, this._dir.y, this._dir.z);
       // 底面顶点（贴脸面），法线径向（侧面带用）
       const botIdx = 1 + count + i;

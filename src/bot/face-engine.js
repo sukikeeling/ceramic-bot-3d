@@ -196,6 +196,7 @@ export class FaceEngine {
     this.line = "";
     this.color = GROKBOT_COLORS[8][2];
     this.paused = false;
+    this.showcaseMode = false; // 表情秀模式（由 showcase 定时器驱动表情）
     this.bodySprings = {
       y: new Spring(0, 170, 15),
       rotate: new Spring(0, 170, 15),
@@ -447,19 +448,19 @@ export class FaceEngine {
         if (this.onColor) this.onColor(c);
       }
     } catch (e) { /* 单次异常不卡死轮询 */ }
-    this._setTimer("state", () => this.changeState(), rand(11000, 19000));
+    this._setTimer("state", () => this.changeState(), rand(7000, 13000));
   }
   cycleExpr() {
     this._clearTimer("expr");
     if (this.paused) { this._setTimer("expr", () => this.cycleExpr(), 2000); return; }
+    if (this.showcaseMode) return; // 表情秀模式下由 showcase 定时器驱动
     const pool = this.data.POOLS[this.activeState] || [];
     if (!pool.length) { this._setTimer("expr", () => this.cycleExpr(), 3000); return; }
     let idx = pick(pool);
     if (idx === this.expression && pool.length > 1) idx = pick(pool);
     this.chooseExpression(idx);
     const cad = this.data.EXPR_CADENCE[this.activeState] || [3000, 5000];
-    // 节奏放慢 1.8 倍（用户反馈表情变化过快）
-    this._setTimer("expr", () => this.cycleExpr(), rand(cad[0], cad[1]) * 1.8);
+    this._setTimer("expr", () => this.cycleExpr(), rand(cad[0], cad[1]));
   }
   scheduleBlink() {
     this._clearTimer("blink");

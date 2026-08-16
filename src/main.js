@@ -146,23 +146,28 @@ async function start() {
     cameraFlight.t = 0;
   });
 
-  /* —— 表情秀：遍历 25 个表情展示 3D morph —— */
+  /* —— 表情秀：遍历 25 个表情展示 3D morph（默认开启，1.2s/个） —— */
   const showcaseButton = document.querySelector("#bot-showcase");
   let showcaseTimer = null;
-  showcaseButton.addEventListener("click", () => {
+  function toggleShowcase() {
     if (showcaseTimer) {
       clearInterval(showcaseTimer);
       showcaseTimer = null;
+      bot.engine.showcaseMode = false;
+      bot.engine.cycleExpr();
       showcaseButton.textContent = "表情秀";
-      return;
+    } else {
+      let exprIndex = bot.engine.expression;
+      bot.engine.showcaseMode = true;
+      showcaseTimer = setInterval(() => {
+        exprIndex = (exprIndex + 1) % 25;
+        bot.engine.chooseExpression(exprIndex);
+      }, 1200);
+      showcaseButton.textContent = "停止";
     }
-    let exprIndex = bot.engine.expression;
-    showcaseTimer = setInterval(() => {
-      exprIndex = (exprIndex + 1) % 25;
-      bot.engine.chooseExpression(exprIndex);
-    }, 1200);
-    showcaseButton.textContent = "停止";
-  });
+  }
+  showcaseButton.addEventListener("click", toggleShowcase);
+  toggleShowcase(); // 默认开启表情秀
 
   /* —— 渲染循环 —— */
   let previous = performance.now();
