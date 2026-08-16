@@ -121,6 +121,7 @@ export function createCeramicBot({ onLine = null } = {}) {
     new THREE.TorusGeometry(FACE_RADIUS * 1.06, 0.014, 8, 72),
     haloMaterial,
   );
+  halo.userData.ignorePointer = true;
   halo.rotation.x = Math.PI / 2.4;
   halo.visible = false;
   group.add(halo);
@@ -149,6 +150,7 @@ export function createCeramicBot({ onLine = null } = {}) {
     sizeAttenuation: true,
   });
   const particles = new THREE.Points(particleGeo, particleMaterial);
+  particles.userData.ignorePointer = true;
   group.add(particles);
   let particleCursor = 0;
 
@@ -185,6 +187,7 @@ export function createCeramicBot({ onLine = null } = {}) {
     sizeAttenuation: true,
   });
   const orbitPoints = new THREE.Points(orbitGeo, orbitMaterial);
+  orbitPoints.userData.ignorePointer = true;
   group.add(orbitPoints);
 
   /* —— 雷达光波（radar 状态：三圈同心波纹扩散） —— */
@@ -200,6 +203,7 @@ export function createCeramicBot({ onLine = null } = {}) {
   });
   for (let i = 0; i < RIPPLE_COUNT; i += 1) {
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.78, 0.83, 56), rippleMat);
+    ring.userData.ignorePointer = true;
     ring.visible = false;
     group.add(ring);
     rippleRings.push(ring);

@@ -39,6 +39,7 @@ async function start() {
   const studio = createStudioScene({ renderer, scene, camera });
   const bot = createCeramicBot({
     onLine: (line) => {
+      bubble.hidden = false;
       bubble.textContent = line;
       bubble.classList.remove("show");
       void bubble.offsetWidth;
@@ -69,7 +70,8 @@ async function start() {
   function hitBot() {
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObject(bot.group, true);
-    return hits.length > 0;
+    // 过滤特效对象（环绕星点/波纹/粒子/光环不参与"摸头/拖转"判定）
+    return hits.some((h) => !h.object.userData.ignorePointer);
   }
 
   canvas.addEventListener("pointerdown", (event) => {
@@ -211,8 +213,11 @@ async function start() {
       anchor.y += 1.05;
       anchor.project(camera);
       if (anchor.z < 1 && anchor.z > -1) {
+        bubble.hidden = false;
         bubble.style.left = `${((anchor.x * 0.5 + 0.5) * window.innerWidth).toFixed(0)}px`;
         bubble.style.top = `${((-anchor.y * 0.5 + 0.5) * window.innerHeight).toFixed(0)}px`;
+      } else {
+        bubble.hidden = true;
       }
 
       renderer.render(scene, camera);
