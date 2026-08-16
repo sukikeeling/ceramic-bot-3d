@@ -64,9 +64,9 @@ async function start() {
   composer.addPass(new RenderPass(scene, camera));
   const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(canvas.clientWidth, canvas.clientHeight),
-    0.85, // strength
-    0.65, // radius
-    0.5, // threshold
+    0.35, // strength（降：之前 0.85 导致全场景过曝白花花）
+    0.6, // radius
+    0.78, // threshold（升：只有最亮的粒子/光环发光，陶瓷本体不发光）
   );
   composer.addPass(bloomPass);
 
