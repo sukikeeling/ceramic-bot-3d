@@ -10,6 +10,7 @@ import { FaceEngine } from "./face-engine.js";
 import { EyeMesh, FACE_RADIUS } from "./eye-mesh.js";
 
 const DEG = Math.PI / 180;
+const TAU = Math.PI * 2;
 
 /* mulberry32（主项目 mesh-kit 同款种子随机） */
 function mulberry32(seed) {
