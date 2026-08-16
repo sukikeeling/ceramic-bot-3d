@@ -7,7 +7,7 @@
 import * as THREE from "three";
 
 export const FACE_RADIUS = 0.74;      // 脸球半径
-export const EYE_THICK = 0.06;        // 眼睛厚度（凸出脸面）
+export const EYE_THICK = 0.032;       // 眼睛厚度（凸出脸面，薄一点更贴脸更萌）
 const ORIGIN_X = 114.2705;            // 原版脸心 x
 const ORIGIN_Y = 114.2705;            // 原版脸心 y
 const NORM = 105;                     // 原版半脸宽（归一化系数）
@@ -53,8 +53,8 @@ export class EyeMesh {
 
     // 眼睛中心在球面上的位置（归一化方向；注意原版 SVG y 向下 → 3D y 向上需翻转）
     // 压缩映射范围：保留表情的位置关系，但眼睛始终落在脸正面可见区域
-    const nx = THREE.MathUtils.clamp((cx - ORIGIN_X) / NORM, -1, 1) * 0.55;
-    const ny = THREE.MathUtils.clamp(-(cy - ORIGIN_Y) / NORM, -1, 1) * 0.55;
+    const nx = THREE.MathUtils.clamp((cx - ORIGIN_X) / NORM, -1, 1) * 0.85;
+    const ny = THREE.MathUtils.clamp(-(cy - ORIGIN_Y) / NORM, -1, 1) * 0.85;
     const nz = Math.sqrt(Math.max(0.02, 1 - nx * nx - ny * ny));
     this._n.set(nx, ny, nz).normalize();
     // 局部基
@@ -88,7 +88,8 @@ export class EyeMesh {
     this._dir.copy(this._disk).sub(faceCenter).normalize();
     this._p.copy(this._dir).multiplyScalar(FACE_RADIUS);
     pos.setXYZ(0, this._p.x + nAxis.x * thick, this._p.y + nAxis.y * thick, this._p.z + nAxis.z * thick);
-    nor.setXYZ(0, nAxis.x, nAxis.y, nAxis.z);
+    this._dir.copy(this._p).addScaledVector(nAxis, thick).sub(faceCenter).normalize();
+    nor.setXYZ(0, this._dir.x, this._dir.y, this._dir.z);
 
     // —— 环 → 球面 ——
     for (let i = 0; i < count; i += 1) {
@@ -97,10 +98,11 @@ export class EyeMesh {
       this._disk.copy(center).addScaledVector(tAxis, u).addScaledVector(bAxis, v);
       this._dir.copy(this._disk).sub(faceCenter).normalize();
       this._p.copy(this._dir).multiplyScalar(FACE_RADIUS);
-      // 顶面顶点（凸起），法线朝外（N）
+      // 顶面顶点（凸起），法线用真实曲面法线（更圆润的光照）
       const topIdx = 1 + i;
       pos.setXYZ(topIdx, this._p.x + nAxis.x * thick, this._p.y + nAxis.y * thick, this._p.z + nAxis.z * thick);
-      nor.setXYZ(topIdx, nAxis.x, nAxis.y, nAxis.z);
+      this._dir.copy(this._p).addScaledVector(nAxis, thick).sub(faceCenter).normalize();
+      nor.setXYZ(topIdx, this._dir.x, this._dir.y, this._dir.z);
       // 底面顶点（贴脸面），法线径向（侧面带用）
       const botIdx = 1 + count + i;
       pos.setXYZ(botIdx, this._p.x, this._p.y, this._p.z);

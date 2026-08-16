@@ -236,11 +236,21 @@ export function createCeramicBot({ onLine = null } = {}) {
       // 3D 转向（yaw/pitch，拖动时驱动）
       group.rotation.y = snap.yaw * DEG;
       group.rotation.x = snap.pitch * DEG;
-      // 立体眼睛 morph
+      // 立体眼睛 morph —— 对称化：GrokBot 原版数据眼睛挤在右半脸（歪眼设计），
+      // 3D 里观感怪。以脸心为轴保持原间距并放大，去掉静态偏置、保留整体漂移（gaze）。
       const tr0 = snap.eyeTransforms[0];
       const tr1 = snap.eyeTransforms[1];
-      if (tr0) eye0.update(snap.rings[0], tr0, FACE_CENTER);
-      if (tr1) eye1.update(snap.rings[1], tr1, FACE_CENTER);
+      if (tr0 && tr1) {
+        const MID = 114.2705;
+        const SPACING = 1.5; // 间距放大系数（萌系正常眼距）
+        const half = (tr1.tx - tr0.tx) / 2;
+        const mid = (tr0.tx + tr1.tx) / 2;
+        const drift = (mid - MID) * 0.3; // 保留 30% 整体漂移（视线跟随/表情整体移动）
+        const leftX = MID + drift - half * SPACING;
+        const rightX = MID + drift + half * SPACING;
+        eye0.update(snap.rings[0], { ...tr0, tx: leftX }, FACE_CENTER);
+        eye1.update(snap.rings[1], { ...tr1, tx: rightX }, FACE_CENTER);
+      }
       // 光环：特效状态旋转 + 淡出（9 秒后隐藏）
       if (halo.visible) {
         halo.rotation.z += 0.012;
