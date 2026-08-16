@@ -146,7 +146,7 @@ async function start() {
     cameraFlight.t = 0;
   });
 
-  /* —— 表情秀：遍历 25 个表情展示 3D morph（默认开启，1.2s/个） —— */
+  /* —— 表情秀：遍历 25 个表情展示 3D morph（默认开启，2s/个） —— */
   const showcaseButton = document.querySelector("#bot-showcase");
   let showcaseTimer = null;
   function toggleShowcase() {
@@ -162,7 +162,7 @@ async function start() {
       showcaseTimer = setInterval(() => {
         exprIndex = (exprIndex + 1) % 25;
         bot.engine.chooseExpression(exprIndex);
-      }, 1200);
+      }, 2000);
       showcaseButton.textContent = "停止";
     }
   }

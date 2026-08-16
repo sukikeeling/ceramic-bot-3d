@@ -151,6 +151,60 @@ export function createCeramicBot({ onLine = null } = {}) {
   group.add(particles);
   let particleCursor = 0;
 
+  /* —— 彩色环绕星点（常驻：28 颗多彩小点绕球公转） —— */
+  const ORBIT_COUNT = 28;
+  const orbitGeo = new THREE.BufferGeometry();
+  const oPos = new Float32Array(ORBIT_COUNT * 3);
+  const oCol = new Float32Array(ORBIT_COUNT * 3);
+  const oData = [];
+  {
+    const palette = [0xff5d9e, 0x7dfff0, 0xffd84d, 0x9d8cff, 0xffffff, 0xff9d5c];
+    for (let i = 0; i < ORBIT_COUNT; i += 1) {
+      const r = 0.98 + Math.random() * 0.38;
+      const a = (i / ORBIT_COUNT) * TAU + Math.random() * 0.4;
+      const y = -0.6 + Math.random() * 1.2;
+      oData.push({ r, a, y, speed: 0.35 + Math.random() * 0.5, phase: Math.random() * TAU });
+      oPos[i * 3] = Math.cos(a) * r;
+      oPos[i * 3 + 1] = y;
+      oPos[i * 3 + 2] = Math.sin(a) * r;
+      const c = new THREE.Color(palette[i % palette.length]);
+      oCol[i * 3] = c.r;
+      oCol[i * 3 + 1] = c.g;
+      oCol[i * 3 + 2] = c.b;
+    }
+  }
+  orbitGeo.setAttribute("position", new THREE.BufferAttribute(oPos, 3));
+  orbitGeo.setAttribute("color", new THREE.BufferAttribute(oCol, 3));
+  const orbitMaterial = new THREE.PointsMaterial({
+    size: 0.055,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.92,
+    depthWrite: false,
+    sizeAttenuation: true,
+  });
+  const orbitPoints = new THREE.Points(orbitGeo, orbitMaterial);
+  group.add(orbitPoints);
+
+  /* —— 雷达光波（radar 状态：三圈同心波纹扩散） —— */
+  const RIPPLE_COUNT = 3;
+  const rippleRings = [];
+  const rippleStates = [];
+  const rippleMat = new THREE.MeshBasicMaterial({
+    color: 0x08b9a9,
+    transparent: true,
+    opacity: 0,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+  });
+  for (let i = 0; i < RIPPLE_COUNT; i += 1) {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.78, 0.83, 56), rippleMat);
+    ring.visible = false;
+    group.add(ring);
+    rippleRings.push(ring);
+    rippleStates.push({ t: (i / RIPPLE_COUNT) * 1.4 }); // 错开相位
+  }
+
   /* —— 引擎（自动轮询） —— */
   const engine = new FaceEngine({
     onLine,
@@ -229,6 +283,7 @@ export function createCeramicBot({ onLine = null } = {}) {
 
     update(now) {
       const snap = engine.frame(now);
+      const delta = 0.016; // 固定步长（约 60fps）
       // 身体弹簧（原版 scale/rot/y 像素 → 3D 米）
       group.scale.set(snap.body.sx, snap.body.sy, snap.body.sx);
       group.position.y = snap.body.y * 0.0065;
@@ -257,6 +312,33 @@ export function createCeramicBot({ onLine = null } = {}) {
         haloMaterial.opacity = 0.3 + 0.15 * Math.sin(now * 0.006);
         if (now - haloShownAt > 9000) halo.visible = false;
       }
+      // 彩色环绕星点公转（常驻）
+      for (let i = 0; i < ORBIT_COUNT; i += 1) {
+        const d = oData[i];
+        d.a += delta * d.speed;
+        oPos[i * 3] = Math.cos(d.a) * d.r;
+        oPos[i * 3 + 1] = d.y + Math.sin(now * 0.0012 + d.phase) * 0.12;
+        oPos[i * 3 + 2] = Math.sin(d.a) * d.r;
+      }
+      orbitGeo.attributes.position.needsUpdate = true;
+      // 雷达光波（radar 状态：三圈波纹循环扩散）
+      const radarOn = snap.state === "radar";
+      for (let i = 0; i < RIPPLE_COUNT; i += 1) {
+        const ring = rippleRings[i];
+        const st = rippleStates[i];
+        if (radarOn) {
+          ring.visible = true;
+          st.t += delta;
+          const p = st.t % 1.4;
+          const k = p / 1.4;
+          const e = 1 - Math.pow(1 - k, 3);
+          ring.scale.setScalar(1 + e * 4.2);
+          rippleMat.opacity = 0.65 * (1 - k);
+        } else {
+          ring.visible = false;
+          st.t = 0;
+        }
+      }
       // 粒子推进
       updateParticles(0.016);
       return snap;
@@ -277,6 +359,10 @@ export function createCeramicBot({ onLine = null } = {}) {
       haloMaterial.dispose();
       particleGeo.dispose();
       particleMaterial.dispose();
+      orbitGeo.dispose();
+      orbitMaterial.dispose();
+      rippleMat.dispose();
+      for (const ring of rippleRings) ring.geometry.dispose();
       eye0.dispose();
       eye1.dispose();
     },
