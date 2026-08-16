@@ -32,6 +32,8 @@ upstream projects are used, all under the MIT License.
 ## Third-party runtime libraries
 
 - **three.js** (MIT) — 3D engine, `three` npm dependency
+- **three-nebula** (MIT, creativelifeform) — WebGL particle system engine
+  (fireworks / fountains / orbiting particles), `three-nebula` npm dependency
 - **vite** (MIT) — build tooling, devDependency
 
 MIT License texts of upstream projects are preserved in their respective

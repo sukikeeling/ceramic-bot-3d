@@ -1,7 +1,11 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { createStudioScene } from "./scene.js";
 import { createCeramicBot } from "./bot/bot-model.js";
+import { createFxSystem } from "./bot/fx-system.js";
 import "./styles.css";
 
 const canvas = document.querySelector("#scene");
@@ -49,6 +53,22 @@ async function start() {
   });
   bot.group.position.y = 0;
   scene.add(bot.group);
+
+  /* —— 特效系统（three-nebula 粒子 + 冲击波/光环） —— */
+  const fx = createFxSystem({ scene });
+  bot.engine.onState = (state) => fx.onState(state);
+  fx.onState(bot.engine.activeState); // 初始状态触发
+
+  /* —— 后处理：辉光（UnrealBloomPass） —— */
+  const composer = new EffectComposer(renderer);
+  composer.addPass(new RenderPass(scene, camera));
+  const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(canvas.clientWidth, canvas.clientHeight),
+    0.85, // strength
+    0.65, // radius
+    0.5, // threshold
+  );
+  composer.addPass(bloomPass);
 
   /* —— 气泡投影 —— */
   const anchor = new THREE.Vector3();
@@ -177,6 +197,7 @@ async function start() {
     const height = Math.max(1, canvas.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height, false);
+    composer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
   };
@@ -191,6 +212,7 @@ async function start() {
       previous = now;
       controls.update();
       bot.update(now);
+      fx.update(rawDelta, now);
 
       // 相机飞行插值
       if (cameraFlight.active) {
@@ -210,7 +232,8 @@ async function start() {
         bubble.style.top = `${((-anchor.y * 0.5 + 0.5) * window.innerHeight).toFixed(0)}px`;
       }
 
-      renderer.render(scene, camera);
+      // composer 内含 RenderPass，只渲染一次
+      composer.render();
 
       metricElapsed += rawDelta;
       metricFrames += 1;
@@ -227,12 +250,16 @@ async function start() {
   renderer.setAnimationLoop(frame);
   loading.classList.add("is-hidden");
   window.__bot = bot; // 调试/验证句柄
+  window.__fx = fx; // 调试/验证句柄
+  window.__debug = { renderer, camera, controls }; // 调试句柄
 
   window.addEventListener("pagehide", () => {
     renderer.setAnimationLoop(null);
     controls.dispose();
+    fx.dispose();
     bot.dispose();
     studio.dispose();
+    composer.dispose();
     renderer.dispose();
   }, { once: true });
 }
