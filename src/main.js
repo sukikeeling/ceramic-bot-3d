@@ -146,6 +146,24 @@ async function start() {
     cameraFlight.t = 0;
   });
 
+  /* —— 表情秀：遍历 25 个表情展示 3D morph —— */
+  const showcaseButton = document.querySelector("#bot-showcase");
+  let showcaseTimer = null;
+  showcaseButton.addEventListener("click", () => {
+    if (showcaseTimer) {
+      clearInterval(showcaseTimer);
+      showcaseTimer = null;
+      showcaseButton.textContent = "表情秀";
+      return;
+    }
+    let exprIndex = bot.engine.expression;
+    showcaseTimer = setInterval(() => {
+      exprIndex = (exprIndex + 1) % 25;
+      bot.engine.chooseExpression(exprIndex);
+    }, 1200);
+    showcaseButton.textContent = "停止";
+  });
+
   /* —— 渲染循环 —— */
   let previous = performance.now();
   let fpsEl = document.querySelector("#fps");
