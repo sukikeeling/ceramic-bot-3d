@@ -4,6 +4,10 @@
 > 陶瓷材质与摄影棚布光，把 moodie-pet 的 2D 小脸做成了**真·3D 立体 bot**——
 > 眼睛是贴在陶瓷球面上的立体凸起形状，表情数据实时驱动 3D morph。
 
+**🌐 在线体验：https://sukikeeling.github.io/ceramic-bot-3d/**
+
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ## 学了主项目的什么
 
 | 主项目技术 | 本项目的落地 |
