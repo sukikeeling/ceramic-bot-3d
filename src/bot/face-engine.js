@@ -447,7 +447,7 @@ export class FaceEngine {
         if (this.onColor) this.onColor(c);
       }
     } catch (e) { /* 单次异常不卡死轮询 */ }
-    this._setTimer("state", () => this.changeState(), rand(7000, 13000));
+    this._setTimer("state", () => this.changeState(), rand(11000, 19000));
   }
   cycleExpr() {
     this._clearTimer("expr");
@@ -458,7 +458,8 @@ export class FaceEngine {
     if (idx === this.expression && pool.length > 1) idx = pick(pool);
     this.chooseExpression(idx);
     const cad = this.data.EXPR_CADENCE[this.activeState] || [3000, 5000];
-    this._setTimer("expr", () => this.cycleExpr(), rand(cad[0], cad[1]));
+    // 节奏放慢 1.8 倍（用户反馈表情变化过快）
+    this._setTimer("expr", () => this.cycleExpr(), rand(cad[0], cad[1]) * 1.8);
   }
   scheduleBlink() {
     this._clearTimer("blink");
