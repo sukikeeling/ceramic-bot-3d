@@ -72,7 +72,7 @@ export class EyeMesh {
     const thick = EYE_THICK;
     const rScale = PX_TO_M;
 
-    // —— 顶面中心（凸起在环质心上） ——
+    // —— 顶面中心（凸起在环质心上，沿该点自身球面法线） ——
     let sumX = 0;
     let sumY = 0;
     for (let i = 0; i < count; i += 1) {
@@ -88,8 +88,10 @@ export class EyeMesh {
       .addScaledVector(bAxis, gv);
     this._dir.copy(this._disk).sub(faceCenter).normalize();
     this._p.copy(this._dir).multiplyScalar(FACE_RADIUS);
-    pos.setXYZ(0, this._p.x + nAxis.x * thick, this._p.y + nAxis.y * thick, this._p.z + nAxis.z * thick);
-    this._dir.copy(this._p).addScaledVector(nAxis, thick).sub(faceCenter).normalize();
+    // 中心点自身球面法线（与环点凸起方向一致，避免大表情 fan 面扭曲）
+    this._pn.copy(this._p).sub(faceCenter).normalize();
+    pos.setXYZ(0, this._p.x + this._pn.x * thick, this._p.y + this._pn.y * thick, this._p.z + this._pn.z * thick);
+    this._dir.copy(this._p).addScaledVector(this._pn, thick).sub(faceCenter).normalize();
     nor.setXYZ(0, this._dir.x, this._dir.y, this._dir.z);
 
     // —— 环 → 球面 ——
@@ -106,11 +108,10 @@ export class EyeMesh {
       pos.setXYZ(topIdx, this._p.x + this._pn.x * thick, this._p.y + this._pn.y * thick, this._p.z + this._pn.z * thick);
       this._dir.copy(this._p).addScaledVector(this._pn, thick).sub(faceCenter).normalize();
       nor.setXYZ(topIdx, this._dir.x, this._dir.y, this._dir.z);
-      // 底面顶点（贴脸面），法线径向（侧面带用）
+      // 底面顶点（贴脸面），法线用该点球面法线（侧面带光照正确，避免黑缝/穿模感）
       const botIdx = 1 + count + i;
       pos.setXYZ(botIdx, this._p.x, this._p.y, this._p.z);
-      this._dir.copy(this._p).sub(center).normalize();
-      nor.setXYZ(botIdx, this._dir.x, this._dir.y, this._dir.z);
+      nor.setXYZ(botIdx, this._pn.x, this._pn.y, this._pn.z);
     }
 
     pos.needsUpdate = true;
