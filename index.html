@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="3D 立体陶瓷 bot：学习 vibe-submarine 的程序化几何、陶瓷材质与摄影棚布光，把 moodie-pet 的 2D 小脸做成立体 bot。"
+    />
+    <meta name="theme-color" content="#c9c2b8" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23ff5d9e'/%3E%3Cellipse cx='24' cy='28' rx='6' ry='8' fill='%23fffdf7'/%3E%3Cellipse cx='41' cy='26' rx='6' ry='8' fill='%23fffdf7'/%3E%3C/svg%3E" />
+    <title>Ceramic Bot · 3D 立体陶瓷小脸</title>
+  </head>
+  <body>
+    <canvas id="scene" aria-label="可交互的 3D 立体陶瓷 bot"></canvas>
+
+    <header class="brand">
+      <p>PROCEDURAL 3D PET STUDY</p>
+      <h1>Ceramic Bot</h1>
+      <span>Porcelain · Glaze · Light · Code</span>
+    </header>
+
+    <aside class="controls" aria-label="Bot 控制">
+      <div class="control-group" data-bot-group>
+        <span class="control-label">BOT</span>
+        <button id="bot-next-mood">换心情</button>
+        <button id="bot-pause">bot 暂停</button>
+        <button id="bot-color">换颜色</button>
+        <button id="bot-closeup">特写</button>
+        <button id="bot-reset-view">重置视角</button>
+      </div>
+      <p class="hint">拖动旋转视角 · 滚轮缩放 · 按住 bot 转向 · 点击摸头 · 鼠标悬停视线跟随</p>
+    </aside>
+
+    <div class="metrics" aria-live="polite">
+      <span><b id="fps">--</b> FPS</span>
+      <span><b id="tris">--</b> TRIS</span>
+    </div>
+
+    <div id="bubble" class="bot-bubble" hidden></div>
+
+    <div id="loading" class="loading">
+      <div class="loader" aria-hidden="true"></div>
+      <p>正在烧制陶瓷 bot…</p>
+    </div>
+
+    <div id="error" class="error" role="alert" hidden></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
