@@ -1,14 +1,14 @@
 /* ============================================================
-   scene.js —— 摄影棚布光（复刻主项目 vibe-submarine）
+   scene.js —— 摄影棚布光与艺术展台（复刻主项目 vibe-submarine）
    - 程序生成浮点摄影棚环境贴图（5 块柔光箱）
    - 暖主光 + 冷补光 + 暖轮廓光 + 2048 软阴影
+   - 艺术陈列台：双层拉丝黄铜 + 象牙白瓷托盘 + 微光环
    - ShadowMaterial 地面 + 柔和接触阴影（blush）
-   - ACES Filmic 色调映射
    ============================================================ */
 import * as THREE from "three";
 
 const TAU = Math.PI * 2;
-const GROUND_Y = -0.82;
+const GROUND_Y = -0.92;
 
 function smooth01(value) {
   return value * value * (3 - 2 * value);
@@ -63,7 +63,7 @@ function buildStudioEnvironment() {
   return environment;
 }
 
-/* 柔和接触阴影（径向渐变圆片，替代主项目 TSL blush） */
+/* 柔和接触阴影（径向渐变圆片） */
 function buildBlushTexture() {
   const size = 256;
   const canvas = document.createElement("canvas");
@@ -71,8 +71,8 @@ function buildBlushTexture() {
   canvas.height = size;
   const ctx = canvas.getContext("2d");
   const gradient = ctx.createRadialGradient(size / 2, size / 2, 8, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, "rgba(107,92,68,0.42)");
-  gradient.addColorStop(0.55, "rgba(107,92,68,0.20)");
+  gradient.addColorStop(0, "rgba(107,92,68,0.45)");
+  gradient.addColorStop(0.5, "rgba(107,92,68,0.22)");
   gradient.addColorStop(1, "rgba(107,92,68,0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
@@ -86,7 +86,7 @@ export function createStudioScene({ renderer, scene, camera }) {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.78;
+  renderer.toneMappingExposure = 0.82;
 
   scene.background = new THREE.Color(0xc9c2b8);
 
@@ -94,12 +94,12 @@ export function createStudioScene({ renderer, scene, camera }) {
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envRT = pmrem.fromEquirectangular(environment);
   scene.environment = envRT.texture;
-  scene.environmentIntensity = 0.42;
+  scene.environmentIntensity = 0.45;
   environment.dispose();
   pmrem.dispose();
 
   /* —— 主光（暖色 + 软阴影） —— */
-  const key = new THREE.DirectionalLight(0xffead4, 1.9);
+  const key = new THREE.DirectionalLight(0xffead4, 1.95);
   key.position.set(3.2, 4.4, 2.6);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
@@ -115,16 +115,60 @@ export function createStudioScene({ renderer, scene, camera }) {
   scene.add(key);
 
   /* —— 补光 + 轮廓光 —— */
-  const fill = new THREE.DirectionalLight(0xcadcf2, 0.34);
+  const fill = new THREE.DirectionalLight(0xcadcf2, 0.36);
   fill.position.set(-3.4, 1.8, 1.6);
   scene.add(fill);
-  const rim = new THREE.DirectionalLight(0xffc98f, 0.62);
+  const rim = new THREE.DirectionalLight(0xffc98f, 0.65);
   rim.position.set(-1.4, 2.2, -3.6);
   scene.add(rim);
 
+  /* —— 艺术展示台座（Plinth Base） —— */
+  const plinthGroup = new THREE.Group();
+  plinthGroup.position.set(0, GROUND_Y, 0);
+
+  const brassMat = new THREE.MeshPhysicalMaterial({
+    color: 0xc7973f,
+    metalness: 1,
+    roughness: 0.28,
+    clearcoat: 0.5,
+    clearcoatRoughness: 0.15,
+    envMapIntensity: 1.0,
+  });
+
+  const porcelainMat = new THREE.MeshPhysicalMaterial({
+    color: 0xf4f0e6,
+    metalness: 0,
+    roughness: 0.18,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+    sheen: 0.8,
+    sheenColor: new THREE.Color(0xffffff),
+    envMapIntensity: 1.1,
+  });
+
+  // 1. 底层黄铜大圆环
+  const ring1 = new THREE.Mesh(new THREE.CylinderGeometry(1.28, 1.34, 0.05, 48), brassMat);
+  ring1.receiveShadow = true;
+  ring1.position.y = 0.025;
+  plinthGroup.add(ring1);
+
+  // 2. 中层象牙白瓷主托台
+  const dish = new THREE.Mesh(new THREE.CylinderGeometry(1.16, 1.24, 0.06, 48), porcelainMat);
+  dish.receiveShadow = true;
+  dish.position.y = 0.075;
+  plinthGroup.add(dish);
+
+  // 3. 上层黄铜内嵌同心圆环
+  const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.015, 48), brassMat);
+  ring2.receiveShadow = true;
+  ring2.position.y = 0.11;
+  plinthGroup.add(ring2);
+
+  scene.add(plinthGroup);
+
   /* —— 地面 + 接触阴影 —— */
-  const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.24 });
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(14, 48), groundMaterial);
+  const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.26 });
+  const ground = new THREE.Mesh(new THREE.CircleGeometry(16, 48), groundMaterial);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = GROUND_Y;
   ground.receiveShadow = true;
@@ -135,9 +179,9 @@ export function createStudioScene({ renderer, scene, camera }) {
     transparent: true,
     depthWrite: false,
   });
-  const blush = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 4.6), blushMaterial);
+  const blush = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 5.2), blushMaterial);
   blush.rotation.x = -Math.PI / 2;
-  blush.position.set(0, GROUND_Y + 0.004, 0);
+  blush.position.set(0, GROUND_Y + 0.002, 0);
   blush.renderOrder = -1;
   scene.add(blush);
 
@@ -152,6 +196,11 @@ export function createStudioScene({ renderer, scene, camera }) {
       blush.geometry.dispose();
       blushMaterial.map.dispose();
       blushMaterial.dispose();
+      ring1.geometry.dispose();
+      dish.geometry.dispose();
+      ring2.geometry.dispose();
+      brassMat.dispose();
+      porcelainMat.dispose();
     },
   };
 }
