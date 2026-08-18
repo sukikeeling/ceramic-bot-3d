@@ -9,8 +9,8 @@ const loading = document.querySelector("#loading");
 const errorPanel = document.querySelector("#error");
 const bubble = document.querySelector("#bubble");
 
-const CAMERA_POSITION = new THREE.Vector3(1.9, 0.85, 2.6);
-const CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
+const CAMERA_POSITION = new THREE.Vector3(1.85, 0.75, 2.5);
+const CAMERA_TARGET = new THREE.Vector3(0, -0.05, 0);
 
 async function start() {
   const renderer = new THREE.WebGLRenderer({
@@ -58,7 +58,7 @@ async function start() {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const hitPoint = new THREE.Vector3();
-  const gazeSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 0.78);
+  const gazeSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 0.85);
   let dragging = false;
   let dragTurn = 0;
   let dragPitch = 0;
@@ -70,7 +70,6 @@ async function start() {
   function hitBot() {
     raycaster.setFromCamera(pointer, camera);
     const hits = raycaster.intersectObject(bot.group, true);
-    // 过滤特效对象（环绕星点/波纹/粒子/光环不参与"摸头/拖转"判定）
     return hits.some((h) => !h.object.userData.ignorePointer);
   }
 
@@ -78,15 +77,17 @@ async function start() {
     if (event.button !== 0) return;
     screenToNdc(event);
     if (hitBot()) {
+      bot.boop(); // 按中 Bot 身体直接触发 Q 弹果冻形变与星光粒子！
       dragging = true;
       dragTurn = bot.group.rotation.y / (Math.PI / 180);
       dragPitch = bot.group.rotation.x / (Math.PI / 180);
       controls.enabled = false;
       canvas.setPointerCapture?.(event.pointerId);
     } else {
-      bot.boop(); // 点空处也会摸头（找 bot 方便）
+      bot.boop(); // 点空处也触发摸头
     }
   });
+
   window.addEventListener("pointermove", (event) => {
     screenToNdc(event);
     if (dragging) {
@@ -98,14 +99,15 @@ async function start() {
       raycaster.setFromCamera(pointer, camera);
       raycaster.ray.intersectSphere(gazeSphere, hitPoint);
       if (hitPoint.x !== 0 || hitPoint.y !== 0 || hitPoint.z !== 0) {
-        const dx = THREE.MathUtils.clamp(hitPoint.x / 0.78, -1, 1);
-        const dy = THREE.MathUtils.clamp(hitPoint.y / 0.78, -1, 1);
+        const dx = THREE.MathUtils.clamp(hitPoint.x / 0.85, -1, 1);
+        const dy = THREE.MathUtils.clamp(hitPoint.y / 0.85, -1, 1);
         bot.engine.setGaze(dx, dy);
       } else {
         hitPoint.set(0, 0, 0);
       }
     }
   });
+
   const endDrag = () => {
     if (!dragging) return;
     dragging = false;
@@ -136,8 +138,8 @@ async function start() {
   document.querySelector("#bot-closeup").addEventListener("click", () => {
     cameraFlight.active = true;
     cameraFlight.from.copy(camera.position);
-    cameraFlight.to.set(0, 0.28, 1.55); // 特写：脸前
-    cameraFlight.targetTo.set(0, 0, 0);
+    cameraFlight.to.set(0, 0.15, 1.85); // 绝佳特写视角（头顶天使环、翅膀、五官尽收眼底）
+    cameraFlight.targetTo.set(0, 0.02, 0);
     cameraFlight.t = 0;
   });
   document.querySelector("#bot-reset-view").addEventListener("click", () => {
@@ -196,6 +198,7 @@ async function start() {
     try {
       const rawDelta = Math.min((now - previous) / 1000, 0.1);
       previous = now;
+
       controls.update();
       bot.update(now);
 

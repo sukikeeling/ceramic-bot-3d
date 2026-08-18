@@ -1,9 +1,10 @@
 /* ============================================================
-   scene.js —— 摄影棚布光与艺术展台（复刻主项目 vibe-submarine）
+   scene.js —— 摄影棚布光与当代艺术陈列台座
    - 程序生成浮点摄影棚环境贴图（5 块柔光箱）
    - 暖主光 + 冷补光 + 暖轮廓光 + 2048 软阴影
-   - 艺术陈列台：双层拉丝黄铜 + 象牙白瓷托盘 + 微光环
-   - ShadowMaterial 地面 + 柔和接触阴影（blush）
+   - 大师级当代艺术陈列台座（Plinth Base）：
+     双层梯形车削拉丝黄铜 + 象牙骨瓷托盘 + 金色聚能环，稳稳承托 Bot 底部
+   - ShadowMaterial 地面 + 柔和接触阴影
    ============================================================ */
 import * as THREE from "three";
 
@@ -63,17 +64,17 @@ function buildStudioEnvironment() {
   return environment;
 }
 
-/* 柔和接触阴影（径向渐变圆片） */
+/* 柔和接触阴影 */
 function buildBlushTexture() {
   const size = 256;
   const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 8, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, "rgba(107,92,68,0.45)");
-  gradient.addColorStop(0.5, "rgba(107,92,68,0.22)");
-  gradient.addColorStop(1, "rgba(107,92,68,0)");
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 6, size / 2, size / 2, size / 2);
+  gradient.addColorStop(0, "rgba(107, 92, 68, 0.48)");
+  gradient.addColorStop(0.45, "rgba(107, 92, 68, 0.22)");
+  gradient.addColorStop(1, "rgba(107, 92, 68, 0)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
   const texture = new THREE.CanvasTexture(canvas);
@@ -122,9 +123,8 @@ export function createStudioScene({ renderer, scene, camera }) {
   rim.position.set(-1.4, 2.2, -3.6);
   scene.add(rim);
 
-  /* —— 艺术展示台座（Plinth Base） —— */
+  /* —— 大师级艺术陈列展台（Plinth Base，紧密托住 Bot 底部） —— */
   const plinthGroup = new THREE.Group();
-  plinthGroup.position.set(0, GROUND_Y, 0);
 
   const brassMat = new THREE.MeshPhysicalMaterial({
     color: 0xc7973f,
@@ -146,23 +146,37 @@ export function createStudioScene({ renderer, scene, camera }) {
     envMapIntensity: 1.1,
   });
 
-  // 1. 底层黄铜大圆环
-  const ring1 = new THREE.Mesh(new THREE.CylinderGeometry(1.28, 1.34, 0.05, 48), brassMat);
+  // 1. 底层黄铜大台座（y: -0.92 ~ -0.86）
+  const ring1 = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.45, 0.06, 48), brassMat);
   ring1.receiveShadow = true;
-  ring1.position.y = 0.025;
+  ring1.castShadow = true;
+  ring1.position.y = -0.89;
   plinthGroup.add(ring1);
 
-  // 2. 中层象牙白瓷主托台
-  const dish = new THREE.Mesh(new THREE.CylinderGeometry(1.16, 1.24, 0.06, 48), porcelainMat);
+  // 2. 中层象牙白瓷主托盘（y: -0.86 ~ -0.74）
+  const dish = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.30, 0.12, 48), porcelainMat);
   dish.receiveShadow = true;
-  dish.position.y = 0.075;
+  dish.castShadow = true;
+  dish.position.y = -0.80;
   plinthGroup.add(dish);
 
-  // 3. 上层黄铜内嵌同心圆环
-  const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.015, 48), brassMat);
+  // 3. 顶层黄铜内嵌同心圆环（y: -0.74）
+  const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(0.88, 0.92, 0.02, 48), brassMat);
   ring2.receiveShadow = true;
-  ring2.position.y = 0.11;
+  ring2.position.y = -0.73;
   plinthGroup.add(ring2);
+
+  // 4. 托盘中心发光金环
+  const glowRingMat = new THREE.MeshBasicMaterial({
+    color: 0xffd84d,
+    transparent: true,
+    opacity: 0.75,
+    side: THREE.DoubleSide,
+  });
+  const glowRing = new THREE.Mesh(new THREE.RingGeometry(0.65, 0.72, 48), glowRingMat);
+  glowRing.rotation.x = -Math.PI / 2;
+  glowRing.position.y = -0.718;
+  plinthGroup.add(glowRing);
 
   scene.add(plinthGroup);
 
@@ -179,7 +193,7 @@ export function createStudioScene({ renderer, scene, camera }) {
     transparent: true,
     depthWrite: false,
   });
-  const blush = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 5.2), blushMaterial);
+  const blush = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 5.4), blushMaterial);
   blush.rotation.x = -Math.PI / 2;
   blush.position.set(0, GROUND_Y + 0.002, 0);
   blush.renderOrder = -1;
@@ -199,6 +213,8 @@ export function createStudioScene({ renderer, scene, camera }) {
       ring1.geometry.dispose();
       dish.geometry.dispose();
       ring2.geometry.dispose();
+      glowRing.geometry.dispose();
+      glowRingMat.dispose();
       brassMat.dispose();
       porcelainMat.dispose();
     },
