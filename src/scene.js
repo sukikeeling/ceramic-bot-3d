@@ -123,7 +123,7 @@ export function createStudioScene({ renderer, scene, camera }) {
   rim.position.set(-1.4, 2.2, -3.6);
   scene.add(rim);
 
-  /* —— 大师级艺术陈列展台（Plinth Base，紧密托住 Bot 底部） —— */
+  /* —— 大师级艺术陈列展台（Plinth Base，紧凑精致） —— */
   const plinthGroup = new THREE.Group();
 
   const brassMat = new THREE.MeshPhysicalMaterial({
@@ -146,22 +146,22 @@ export function createStudioScene({ renderer, scene, camera }) {
     envMapIntensity: 1.1,
   });
 
-  // 1. 底层黄铜大台座（y: -0.92 ~ -0.86）
-  const ring1 = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.45, 0.06, 48), brassMat);
+  // 1. 底层黄铜大台座（y: -0.90 ~ -0.84, 半径 1.22）
+  const ring1 = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.24, 0.06, 48), brassMat);
   ring1.receiveShadow = true;
   ring1.castShadow = true;
-  ring1.position.y = -0.89;
+  ring1.position.y = -0.87;
   plinthGroup.add(ring1);
 
-  // 2. 中层象牙白瓷主托盘（y: -0.86 ~ -0.74）
-  const dish = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.30, 0.12, 48), porcelainMat);
+  // 2. 中层象牙白瓷主托盘（y: -0.84 ~ -0.74, 半径 1.08）
+  const dish = new THREE.Mesh(new THREE.CylinderGeometry(1.02, 1.14, 0.10, 48), porcelainMat);
   dish.receiveShadow = true;
   dish.castShadow = true;
-  dish.position.y = -0.80;
+  dish.position.y = -0.79;
   plinthGroup.add(dish);
 
-  // 3. 顶层黄铜内嵌同心圆环（y: -0.74）
-  const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(0.88, 0.92, 0.02, 48), brassMat);
+  // 3. 顶层黄铜内嵌同心圆环（y: -0.73, 半径 0.80）
+  const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.82, 0.02, 48), brassMat);
   ring2.receiveShadow = true;
   ring2.position.y = -0.73;
   plinthGroup.add(ring2);
@@ -173,7 +173,7 @@ export function createStudioScene({ renderer, scene, camera }) {
     opacity: 0.75,
     side: THREE.DoubleSide,
   });
-  const glowRing = new THREE.Mesh(new THREE.RingGeometry(0.65, 0.72, 48), glowRingMat);
+  const glowRing = new THREE.Mesh(new THREE.RingGeometry(0.58, 0.65, 48), glowRingMat);
   glowRing.rotation.x = -Math.PI / 2;
   glowRing.position.y = -0.718;
   plinthGroup.add(glowRing);
@@ -193,7 +193,7 @@ export function createStudioScene({ renderer, scene, camera }) {
     transparent: true,
     depthWrite: false,
   });
-  const blush = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 5.4), blushMaterial);
+  const blush = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 5.0), blushMaterial);
   blush.rotation.x = -Math.PI / 2;
   blush.position.set(0, GROUND_Y + 0.002, 0);
   blush.renderOrder = -1;

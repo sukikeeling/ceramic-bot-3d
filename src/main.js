@@ -9,8 +9,9 @@ const loading = document.querySelector("#loading");
 const errorPanel = document.querySelector("#error");
 const bubble = document.querySelector("#bubble");
 
-const CAMERA_POSITION = new THREE.Vector3(1.85, 0.75, 2.5);
-const CAMERA_TARGET = new THREE.Vector3(0, -0.05, 0);
+// 黄金全景构图：5.0 米开阔距离 + 34 度视角，完整呈现头顶天使光环、正圆球体、双翼与双层展台，上下左右留白极其舒适优雅，绝无任何裁切
+const CAMERA_POSITION = new THREE.Vector3(0, 0.05, 5.00);
+const CAMERA_TARGET = new THREE.Vector3(0, -0.18, 0);
 
 async function start() {
   const renderer = new THREE.WebGLRenderer({
@@ -19,7 +20,6 @@ async function start() {
     powerPreference: "high-performance",
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 60);
@@ -29,7 +29,7 @@ async function start() {
   controls.target.copy(CAMERA_TARGET);
   controls.enableDamping = true;
   controls.dampingFactor = 0.07;
-  controls.minDistance = 1.1;
+  controls.minDistance = 1.2;
   controls.maxDistance = 9;
   controls.minPolarAngle = 0.1;
   controls.maxPolarAngle = 1.55;
@@ -77,14 +77,14 @@ async function start() {
     if (event.button !== 0) return;
     screenToNdc(event);
     if (hitBot()) {
-      bot.boop(); // 按中 Bot 身体直接触发 Q 弹果冻形变与星光粒子！
+      bot.boop();
       dragging = true;
       dragTurn = bot.group.rotation.y / (Math.PI / 180);
       dragPitch = bot.group.rotation.x / (Math.PI / 180);
       controls.enabled = false;
       canvas.setPointerCapture?.(event.pointerId);
     } else {
-      bot.boop(); // 点空处也触发摸头
+      bot.boop();
     }
   });
 
@@ -95,7 +95,6 @@ async function start() {
       const pitch = THREE.MathUtils.clamp(dragPitch + event.movementY * 0.42, -35, 35);
       bot.engine.setTurn(turn, pitch);
     } else {
-      // 视线跟随
       raycaster.setFromCamera(pointer, camera);
       raycaster.ray.intersectSphere(gazeSphere, hitPoint);
       if (hitPoint.x !== 0 || hitPoint.y !== 0 || hitPoint.z !== 0) {
@@ -138,8 +137,8 @@ async function start() {
   document.querySelector("#bot-closeup").addEventListener("click", () => {
     cameraFlight.active = true;
     cameraFlight.from.copy(camera.position);
-    cameraFlight.to.set(0, 0.15, 1.85); // 绝佳特写视角（头顶天使环、翅膀、五官尽收眼底）
-    cameraFlight.targetTo.set(0, 0.02, 0);
+    cameraFlight.to.set(0, 0.05, 3.00); // 绝佳近景特写
+    cameraFlight.targetTo.set(0, -0.06, 0);
     cameraFlight.t = 0;
   });
   document.querySelector("#bot-reset-view").addEventListener("click", () => {
@@ -150,7 +149,7 @@ async function start() {
     cameraFlight.t = 0;
   });
 
-  /* —— 表情秀：遍历 25 个表情展示 3D morph（默认开启，2s/个） —— */
+  /* —— 表情秀 —— */
   const showcaseButton = document.querySelector("#bot-showcase");
   let showcaseTimer = null;
   function toggleShowcase() {
@@ -171,7 +170,7 @@ async function start() {
     }
   }
   showcaseButton.addEventListener("click", toggleShowcase);
-  toggleShowcase(); // 默认开启表情秀
+  toggleShowcase();
 
   /* —— 渲染循环 —— */
   let previous = performance.now();
@@ -182,9 +181,10 @@ async function start() {
   let frameInProgress = false;
 
   const resize = () => {
-    const width = Math.max(1, canvas.clientWidth);
-    const height = Math.max(1, canvas.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const width = Math.max(1, window.innerWidth);
+    const height = Math.max(1, window.innerHeight);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    renderer.setPixelRatio(dpr);
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
@@ -202,7 +202,6 @@ async function start() {
       controls.update();
       bot.update(now);
 
-      // 相机飞行插值
       if (cameraFlight.active) {
         cameraFlight.t += rawDelta * 0.9;
         const k = cameraFlight.t >= 1 ? 1 : 1 - Math.pow(1 - cameraFlight.t, 3);
@@ -239,7 +238,7 @@ async function start() {
   }
   renderer.setAnimationLoop(frame);
   loading.classList.add("is-hidden");
-  window.__bot = bot; // 调试/验证句柄
+  window.__bot = bot;
 
   window.addEventListener("pagehide", () => {
     renderer.setAnimationLoop(null);

@@ -1,12 +1,5 @@
 /* ============================================================
-   bot-model.js —— 3D 立体萌系陶瓷 Sonnet Bot
-   学习主项目 vibe-submarine：
-   1. 萌系水滴团子（Teardrop Blob）程序化曲面雕刻
-   2. 顶级温润骨瓷配方（高光 Clearcoat + Sheen 柔光漫反射）
-   3. 双侧温润白瓷微翼（带黄铜轴套，大幅外展，随呼吸轻扑）
-   4. 头顶悬浮黄铜双层天使小光冠（Mini Floating Halo，前倾20°优雅公转）
-   5. 超 Q 弹果冻摸头形变（Squash & Stretch）与爆心星光粒子
-   6. 自动轮询 + 表情环 3D 实时 Morph
+   bot-model.js —— 3D 立体萌系陶瓷 Sonnet Bot（纯正圆滚滚饱满球体）
    ============================================================ */
 import * as THREE from "three";
 import { FaceEngine } from "./face-engine.js";
@@ -26,19 +19,19 @@ function mulberry32(seed) {
   };
 }
 
-/* —— 顶级温润骨瓷材质（高透玻璃釉层 + 丝绸 Sheen 漫反光） —— */
+/* —— 顶级温润骨瓷材质 —— */
 function createPorcelain(color) {
   return new THREE.MeshPhysicalMaterial({
     color,
     metalness: 0,
-    roughness: 0.15,
+    roughness: 0.14,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.04,
-    sheen: 0.85,
-    sheenRoughness: 0.20,
+    clearcoatRoughness: 0.03,
+    sheen: 0.88,
+    sheenRoughness: 0.18,
     sheenColor: new THREE.Color(0xffffff),
-    reflectivity: 0.92,
-    envMapIntensity: 1.18,
+    reflectivity: 0.95,
+    envMapIntensity: 1.2,
   });
 }
 
@@ -47,42 +40,31 @@ function createBrass() {
   return new THREE.MeshPhysicalMaterial({
     color: 0xc7973f,
     metalness: 1,
-    roughness: 0.26,
+    roughness: 0.25,
     clearcoat: 0.5,
-    clearcoatRoughness: 0.12,
-    envMapIntensity: 1.05,
+    clearcoatRoughness: 0.10,
+    envMapIntensity: 1.1,
   });
 }
 
 export function createCeramicBot({ onLine = null } = {}) {
   const group = new THREE.Group();
 
-  /* —— 1. 身体：程序化水滴团子（Teardrop Cute Blob） —— */
+  /* —— 1. 身体：纯正圆润饱满球体（Perfect Cute Sphere） —— */
   const faceGeometry = new THREE.SphereGeometry(FACE_RADIUS, 64, 48);
   {
     const random = mulberry32(20260816);
     const pos = faceGeometry.attributes.position;
     const norm = faceGeometry.attributes.normal;
+    // 仅保留极微细的手工陶瓷釉面微正弦起伏，绝不改变正圆几何轮廓
     for (let i = 0; i < pos.count; i += 1) {
-      let x = pos.getX(i);
-      let y = pos.getY(i);
-      let z = pos.getZ(i);
-
-      const rOrig = Math.sqrt(x * x + y * y + z * z) || 1;
-      const cosPhi = y / rOrig; // 1 顶, -1 底
-
-      // 水滴形软萌形变：头部轻微聚拢，下盘软糯饱满
-      const shapeMod = 1.0 - 0.08 * cosPhi + 0.06 * (1.0 - cosPhi * cosPhi);
-      x *= shapeMod * 1.02;
-      z *= shapeMod * 1.02;
-      y = y * 0.94 - 0.03;
-
-      // 手工骨瓷微起伏
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
       const bump =
-        Math.sin(x * 9.5 + y * 4.2) * 0.003 +
-        Math.sin(y * 7.1 + z * 5.8) * 0.0028 +
-        (random() - 0.5) * 0.003;
-
+        Math.sin(x * 9.5 + y * 4.2) * 0.0012 +
+        Math.sin(y * 7.1 + z * 5.8) * 0.0010 +
+        (random() - 0.5) * 0.0012;
       pos.setXYZ(i, x + norm.getX(i) * bump, y + norm.getY(i) * bump, z + norm.getZ(i) * bump);
     }
     pos.needsUpdate = true;
@@ -95,22 +77,20 @@ export function createCeramicBot({ onLine = null } = {}) {
   face.receiveShadow = true;
   group.add(face);
 
-  /* —— 2. 配件：双侧温润白瓷萌翼（完全外展，清晰可见） —— */
+  /* —— 2. 配件：双侧温润白瓷小萌翼（带黄铜轴套） —— */
   const wingGroupL = new THREE.Group();
   const wingGroupR = new THREE.Group();
   const wingMat = createPorcelain(0xfffdf7);
   const brassMat = createBrass();
 
-  // 饱满白瓷羽翼片（长 0.34, 宽 0.20, 厚 0.06）
-  const wingGeo = new THREE.SphereGeometry(0.20, 24, 16);
-  wingGeo.scale(0.32, 1.45, 0.72);
+  const wingGeo = new THREE.SphereGeometry(0.19, 24, 16);
+  wingGeo.scale(0.30, 1.40, 0.70);
   const wingMeshL = new THREE.Mesh(wingGeo, wingMat);
   const wingMeshR = new THREE.Mesh(wingGeo, wingMat);
   wingMeshL.castShadow = true;
   wingMeshR.castShadow = true;
 
-  // 黄铜转轴轴套
-  const socketGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.08, 16);
+  const socketGeo = new THREE.CylinderGeometry(0.042, 0.042, 0.07, 16);
   const socketL = new THREE.Mesh(socketGeo, brassMat);
   const socketR = new THREE.Mesh(socketGeo, brassMat);
   socketL.rotation.z = Math.PI / 2;
@@ -118,40 +98,37 @@ export function createCeramicBot({ onLine = null } = {}) {
 
   wingGroupL.add(socketL);
   wingGroupL.add(wingMeshL);
-  wingMeshL.position.set(-0.16, 0.06, 0);
-  wingMeshL.rotation.z = 0.52;
+  wingMeshL.position.set(-0.15, 0.05, 0);
+  wingMeshL.rotation.z = 0.50;
 
   wingGroupR.add(socketR);
   wingGroupR.add(wingMeshR);
-  wingMeshR.position.set(0.16, 0.06, 0);
-  wingMeshR.rotation.z = -0.52;
+  wingMeshR.position.set(0.15, 0.05, 0);
+  wingMeshR.rotation.z = -0.50;
 
-  // 外展至身体轮廓之外（x = ±0.86）
-  wingGroupL.position.set(-0.86, 0.06, -0.04);
-  wingGroupR.position.set(0.86, 0.06, -0.04);
-  wingGroupL.rotation.y = -0.25;
-  wingGroupR.rotation.y = 0.25;
+  wingGroupL.position.set(-0.76, 0.04, -0.02);
+  wingGroupR.position.set(0.76, 0.04, -0.02);
+  wingGroupL.rotation.y = -0.20;
+  wingGroupR.rotation.y = 0.20;
   wingGroupL.userData.ignorePointer = true;
   wingGroupR.userData.ignorePointer = true;
 
   group.add(wingGroupL, wingGroupR);
 
-  /* —— 3. 配件：头顶悬浮双层黄铜天使小光环（清晰醒目，前倾20°） —— */
+  /* —— 3. 配件：头顶悬浮天使小光环 —— */
   const crownGroup = new THREE.Group();
-  crownGroup.position.set(0, FACE_RADIUS + 0.22, 0.04); // 悬浮在头顶上方
-  crownGroup.rotation.x = -0.32; // 前倾约 18 度，正面一眼看到圆环
+  crownGroup.position.set(0, FACE_RADIUS + 0.20, 0.04);
+  crownGroup.rotation.x = -0.32;
   crownGroup.userData.ignorePointer = true;
 
-  // 外层黄铜拉丝光环（半径 0.36）
   const crownBrassRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.36, 0.016, 12, 48),
+    new THREE.TorusGeometry(0.34, 0.015, 12, 48),
     brassMat
   );
   crownBrassRing.rotation.x = Math.PI / 2;
   crownBrassRing.castShadow = true;
   crownGroup.add(crownBrassRing);
 
-  // 内层发光金色光环（半径 0.26）
   const crownGlowRingMat = new THREE.MeshBasicMaterial({
     color: 0xffd84d,
     transparent: true,
@@ -160,7 +137,7 @@ export function createCeramicBot({ onLine = null } = {}) {
     depthWrite: false,
   });
   const crownGlowRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.26, 0.010, 8, 36),
+    new THREE.TorusGeometry(0.25, 0.009, 8, 36),
     crownGlowRingMat
   );
   crownGlowRing.rotation.x = Math.PI / 2;
@@ -168,46 +145,46 @@ export function createCeramicBot({ onLine = null } = {}) {
 
   group.add(crownGroup);
 
-  /* —— 4. 立体眼睛 ×2（表情环驱动，每帧实时 Morph） —— */
-  const ringCount = 47;
+  /* —— 4. 眼睛 ×2（实心饱满纯白白瓷大眼睛，高光纯净圆润） —— */
   const eyeMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0xfffdf7,
+    color: 0xffffff,
     metalness: 0,
-    roughness: 0.14,
+    roughness: 0.12,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.04,
-    sheen: 0.9,
+    clearcoatRoughness: 0.03,
+    sheen: 0.95,
     sheenColor: new THREE.Color(0xffffff),
-    envMapIntensity: 1.15,
+    reflectivity: 0.98,
+    envMapIntensity: 0.90,
     side: THREE.DoubleSide,
   });
-  const eye0 = new EyeMesh(ringCount);
-  const eye1 = new EyeMesh(ringCount);
+  const eye0 = new EyeMesh(36, false); // 左眼
+  const eye1 = new EyeMesh(36, true);  // 右眼
   eye0.mesh.material = eyeMaterial;
   eye1.mesh.material = eyeMaterial;
   eye0.mesh.castShadow = true;
   eye1.mesh.castShadow = true;
   group.add(eye0.mesh, eye1.mesh);
 
-  /* —— 5. 腮红（柔和釉下彩） —— */
+  /* —— 5. 腮红（柔和釉下彩，对称布局） —— */
   const blushMaterial = new THREE.MeshBasicMaterial({
     color: 0xff7d9e,
     transparent: true,
     opacity: 0.40,
     depthWrite: false,
   });
-  const blushGeometry = new THREE.CircleGeometry(0.16, 24);
+  const blushGeometry = new THREE.CircleGeometry(0.15, 24);
   const blushL = new THREE.Mesh(blushGeometry, blushMaterial);
   const blushR = new THREE.Mesh(blushGeometry, blushMaterial);
-  blushL.position.set(-0.46, -0.26, 0.52).normalize().multiplyScalar(FACE_RADIUS + 0.005);
+  blushL.position.set(-0.42, -0.22, 0.56).normalize().multiplyScalar(FACE_RADIUS + 0.004);
   blushL.lookAt(blushL.position.clone().multiplyScalar(2));
-  blushR.position.set(0.46, -0.26, 0.52).normalize().multiplyScalar(FACE_RADIUS + 0.005);
+  blushR.position.set(0.42, -0.22, 0.56).normalize().multiplyScalar(FACE_RADIUS + 0.004);
   blushR.lookAt(blushR.position.clone().multiplyScalar(2));
   blushL.userData.ignorePointer = true;
   blushR.userData.ignorePointer = true;
   group.add(blushL, blushR);
 
-  /* —— 6. 状态光环 —— */
+  /* —— 6. 状态光环（默认隐藏） —— */
   const haloMaterial = new THREE.MeshBasicMaterial({
     color: 0x79e2d0,
     transparent: true,
@@ -224,7 +201,7 @@ export function createCeramicBot({ onLine = null } = {}) {
   halo.visible = false;
   group.add(halo);
 
-  /* —— 7. 3D 粒子系统（状态上浮粒子 + 摸头爆散彩屑） —— */
+  /* —— 7. 3D 粒子系统 —— */
   const PARTICLE_COLORS = {
     happy: 0xff5d9e, excited: 0xffd84d, sleeping: 0xa8b8ff, humming: 0x79e2d0,
     thinking: 0xc9b8ff, celebrate: 0xff5d9e, sad: 0x7fa8ff, surprised: 0xffd84d,
@@ -252,7 +229,7 @@ export function createCeramicBot({ onLine = null } = {}) {
   group.add(particles);
   let particleCursor = 0;
 
-  /* —— 8. 彩色环绕星点（常驻 32 颗） —— */
+  /* —— 8. 彩色环绕星点 —— */
   const ORBIT_COUNT = 32;
   const orbitGeo = new THREE.BufferGeometry();
   const oPos = new Float32Array(ORBIT_COUNT * 3);
@@ -288,7 +265,7 @@ export function createCeramicBot({ onLine = null } = {}) {
   orbitPoints.userData.ignorePointer = true;
   group.add(orbitPoints);
 
-  /* —— 9. 雷达光波 —— */
+  /* —— 9. 雷达光波（默认隐藏） —— */
   const RIPPLE_COUNT = 3;
   const rippleRings = [];
   const rippleStates = [];
@@ -308,7 +285,7 @@ export function createCeramicBot({ onLine = null } = {}) {
     rippleStates.push({ t: (i / RIPPLE_COUNT) * 1.4 });
   }
 
-  /* —— 引擎（自动轮询） —— */
+  /* —— 引擎驱动 —— */
   const RING_HALO_COLORS = {
     orbit: 0x79e2d0, radar: 0x08b9a9, loading: 0xff5d9e,
     alerting: 0xff3347, searching: 0x79e2d0,
@@ -322,7 +299,7 @@ export function createCeramicBot({ onLine = null } = {}) {
       const i = particleCursor;
       particleCursor = (particleCursor + 1) % MAX_PARTICLES;
       const angle = Math.random() * TAU;
-      const radius = FACE_RADIUS * (isBoop ? 0.4 : 0.65);
+      const radius = FACE_RADIUS * (isBoop ? 0.35 : 0.65);
       pPos[i * 3] = Math.cos(angle) * radius;
       pPos[i * 3 + 1] = isBoop ? (FACE_RADIUS * 0.75 + Math.random() * 0.2) : (-FACE_RADIUS * 0.25);
       pPos[i * 3 + 2] = Math.sin(angle) * radius;
@@ -366,9 +343,7 @@ export function createCeramicBot({ onLine = null } = {}) {
   });
 
   const FACE_CENTER = new THREE.Vector3(0, 0, 0);
-
-  // Q 弹果冻形变时间（秒）
-  let squashTime = 999;
+  let boopBounceTime = 999;
 
   const api = {
     group,
@@ -396,8 +371,8 @@ export function createCeramicBot({ onLine = null } = {}) {
 
     boop() {
       engine.boop();
-      squashTime = 0; // 触发 Q 弹果冻形变
-      spawnParticles("happy", 18, true); // 爆散 18 颗金色星光粒子
+      boopBounceTime = 0;
+      spawnParticles("happy", 18, true);
     },
 
     togglePause() { return engine.togglePause(); },
@@ -407,55 +382,38 @@ export function createCeramicBot({ onLine = null } = {}) {
       const snap = engine.frame(now);
       const delta = 0.016;
 
-      // 1. Q 弹果冻形变计算（大幅增强视觉回弹感）
-      let jellyY = 1.0;
-      let jellyXZ = 1.0;
-      if (squashTime < 1.6) {
-        squashTime += delta * 3.2;
-        // 衰减正弦波：先瞬间压扁 20%、水平外扩 18%，随后三次高频弹性回弹
-        const decay = Math.exp(-squashTime * 2.8);
-        const osc = Math.sin(squashTime * Math.PI * 4.2);
-        const factor = decay * osc * 0.28;
-        jellyY = 1.0 - factor;
-        jellyXZ = 1.0 + factor * 0.70;
+      // 1. 摸头轻盈弹跳
+      let bounceY = 0;
+      if (boopBounceTime < 1.2) {
+        boopBounceTime += delta * 3.5;
+        const decay = Math.exp(-boopBounceTime * 3.0);
+        bounceY = Math.sin(boopBounceTime * Math.PI * 3) * 0.05 * decay;
       }
 
-      // 2. 呼吸与身体弹簧
-      const breath = 1.0 + Math.sin(now * 0.003) * 0.02;
-      group.scale.set(
-        snap.body.sx * jellyXZ * breath,
-        snap.body.sy * jellyY * breath,
-        snap.body.sx * jellyXZ * breath
-      );
+      // 2. 纯等比缩放呼吸
+      const breath = 1.0 + Math.sin(now * 0.0028) * 0.015;
+      group.scale.setScalar(breath);
 
-      group.position.y = snap.body.y * 0.0065 + Math.sin(now * 0.0022) * 0.025;
+      // 上下微沉浮与转向
+      group.position.y = snap.body.y * 0.006 + Math.sin(now * 0.0022) * 0.018 + bounceY;
       group.rotation.z = snap.body.rot * DEG * 0.012;
       group.rotation.y = snap.yaw * DEG;
       group.rotation.x = snap.pitch * DEG;
 
-      // 3. 翅膀跟随呼吸轻扇
-      const wingFlutter = Math.sin(now * 0.005) * 0.14;
+      // 3. 翅膀随呼吸轻扇
+      const wingFlutter = Math.sin(now * 0.0048) * 0.12;
       wingGroupL.rotation.z = wingFlutter;
       wingGroupR.rotation.z = -wingFlutter;
 
       // 4. 头顶天使光冠自转与悬浮
       crownGroup.rotation.y = now * 0.0018;
-      crownGroup.position.y = FACE_RADIUS + 0.22 + Math.sin(now * 0.003) * 0.02;
+      crownGroup.position.y = FACE_RADIUS + 0.20 + Math.sin(now * 0.003) * 0.015;
 
-      // 5. 立体眼睛 Morph
+      // 5. 眼睛网格 Morph（实心纯白瓷灵动大眼）
       const tr0 = snap.eyeTransforms[0];
       const tr1 = snap.eyeTransforms[1];
-      if (tr0 && tr1) {
-        const MID = 114.2705;
-        const SPACING = 1.52;
-        const half = (tr1.tx - tr0.tx) / 2;
-        const mid = (tr0.tx + tr1.tx) / 2;
-        const drift = (mid - MID) * 0.3;
-        const leftX = MID + drift - half * SPACING;
-        const rightX = MID + drift + half * SPACING;
-        eye0.update(snap.rings[0], { ...tr0, tx: leftX }, FACE_CENTER);
-        eye1.update(snap.rings[1], { ...tr1, tx: rightX }, FACE_CENTER);
-      }
+      eye0.update(snap.rings[0], tr0 || {}, FACE_CENTER);
+      eye1.update(snap.rings[0], tr1 || tr0 || {}, FACE_CENTER);
 
       // 6. 光环淡出
       if (halo.visible) {
@@ -469,7 +427,7 @@ export function createCeramicBot({ onLine = null } = {}) {
         const d = oData[i];
         d.a += delta * d.speed;
         oPos[i * 3] = Math.cos(d.a) * d.r;
-        oPos[i * 3 + 1] = d.y + Math.sin(now * 0.0012 + d.phase) * 0.14;
+        oPos[i * 3 + 1] = d.y + Math.sin(now * 0.0012 + d.phase) * 0.12;
         oPos[i * 3 + 2] = Math.sin(d.a) * d.r;
       }
       orbitGeo.attributes.position.needsUpdate = true;
