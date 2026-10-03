@@ -31,6 +31,7 @@ export class EyeMesh {
     const segs = this.segments;
     const pos = this._pos;
     const nor = this._nor;
+    const sx = THREE.MathUtils.clamp(tr.sx ?? 1, 0.7, 1.25);
     const sy = tr.sy ?? 1;
 
     // 1. 眼睛中心在正前方球面上的位置 (左右眼对称 ±0.22 弧度)
@@ -50,8 +51,8 @@ export class EyeMesh {
     const tAxis = this._t;
     const bAxis = this._b;
 
-    // 2. 眼睛半径（圆润灵动大眼）
-    const rx = EYE_RADIUS * 1.05;
+    // 2. 眼睛半径（圆润灵动大眼，结合表情脉冲微弹动）
+    const rx = EYE_RADIUS * 1.05 * sx;
     const ry = EYE_RADIUS * 1.05 * Math.max(0.10, sy);
 
     // 3. 顶面中心点 (饱满微穹顶凸起，高度充足吃满白瓷高光)

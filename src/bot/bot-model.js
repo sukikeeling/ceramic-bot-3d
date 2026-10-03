@@ -365,7 +365,8 @@ export function createCeramicBot({ onLine = null } = {}) {
       if (hex) {
         const c = new THREE.Color(hex);
         crownGlowRingMat.color.copy(c);
-        blushMaterial.color.copy(c);
+        // 腮红保持温润自然的微醺釉下绯红，避免与身体同色造成斑块感
+        blushMaterial.color.set(0xff7088);
       }
     },
 
@@ -409,11 +410,13 @@ export function createCeramicBot({ onLine = null } = {}) {
       crownGroup.rotation.y = now * 0.0018;
       crownGroup.position.y = FACE_RADIUS + 0.20 + Math.sin(now * 0.003) * 0.015;
 
-      // 5. 眼睛网格 Morph（实心纯白瓷灵动大眼）
+      // 5. 眼睛网格 Morph（实心纯白瓷灵动大眼，支持双眼独立表情 ring）
       const tr0 = snap.eyeTransforms[0];
       const tr1 = snap.eyeTransforms[1];
-      eye0.update(snap.rings[0], tr0 || {}, FACE_CENTER);
-      eye1.update(snap.rings[0], tr1 || tr0 || {}, FACE_CENTER);
+      const r0 = snap.rings[0];
+      const r1 = snap.rings[1] || snap.rings[0];
+      eye0.update(r0, tr0 || {}, FACE_CENTER);
+      eye1.update(r1, tr1 || tr0 || {}, FACE_CENTER);
 
       // 6. 光环淡出
       if (halo.visible) {

@@ -207,7 +207,8 @@ export class FaceEngine {
     this.yawSpring = new Spring(0, 150, 16);
     this.pitchSpring = new Spring(0, 150, 16);
     this._fxTimers = [];
-    this._timers = [];
+    this._timers = {};
+    this._fxRunning = null;
     this._lastLine = "";
     this._fxAcc = {};
   }

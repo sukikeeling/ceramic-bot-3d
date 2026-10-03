@@ -37,15 +37,21 @@ async function start() {
   controls.update();
 
   const studio = createStudioScene({ renderer, scene, camera });
+  let bubbleTimer = null;
   const bot = createCeramicBot({
     onLine: (line) => {
-      bubble.hidden = false;
       bubble.textContent = line;
+      bubble.hidden = false;
       bubble.classList.remove("show");
       void bubble.offsetWidth;
       bubble.classList.add("show");
-      clearTimeout(bubble._t);
-      bubble._t = setTimeout(() => bubble.classList.remove("show"), 3400);
+      clearTimeout(bubbleTimer);
+      bubbleTimer = setTimeout(() => {
+        bubble.classList.remove("show");
+        bubbleTimer = setTimeout(() => {
+          bubble.hidden = true;
+        }, 320);
+      }, 3400);
     },
   });
   bot.group.position.y = 0;
@@ -83,26 +89,24 @@ async function start() {
       dragPitch = bot.group.rotation.x / (Math.PI / 180);
       controls.enabled = false;
       canvas.setPointerCapture?.(event.pointerId);
-    } else {
-      bot.boop();
     }
   });
 
   window.addEventListener("pointermove", (event) => {
     screenToNdc(event);
     if (dragging) {
-      const turn = THREE.MathUtils.clamp(dragTurn + event.movementX * 0.55, -60, 60);
-      const pitch = THREE.MathUtils.clamp(dragPitch + event.movementY * 0.42, -35, 35);
-      bot.engine.setTurn(turn, pitch);
+      dragTurn = THREE.MathUtils.clamp(dragTurn + event.movementX * 0.45, -44, 44);
+      dragPitch = THREE.MathUtils.clamp(dragPitch + event.movementY * 0.35, -26, 26);
+      bot.engine.setTurn(dragTurn, dragPitch);
     } else {
       raycaster.setFromCamera(pointer, camera);
-      raycaster.ray.intersectSphere(gazeSphere, hitPoint);
-      if (hitPoint.x !== 0 || hitPoint.y !== 0 || hitPoint.z !== 0) {
+      const hit = raycaster.ray.intersectSphere(gazeSphere, hitPoint);
+      if (hit) {
         const dx = THREE.MathUtils.clamp(hitPoint.x / 0.85, -1, 1);
         const dy = THREE.MathUtils.clamp(hitPoint.y / 0.85, -1, 1);
         bot.engine.setGaze(dx, dy);
       } else {
-        hitPoint.set(0, 0, 0);
+        bot.engine.clearGaze();
       }
     }
   });
@@ -124,6 +128,7 @@ async function start() {
   botPause.addEventListener("click", () => {
     const paused = bot.togglePause();
     botPause.textContent = paused ? "bot 继续" : "bot 暂停";
+    botPause.classList.toggle("is-active", paused);
   });
   const COLORS = ["#ff2d8b", "#08c77a", "#2f86ed", "#8656f6", "#ff9800", "#ff3347", "#f8f4ea"];
   let colorIndex = 0;
@@ -137,8 +142,8 @@ async function start() {
   document.querySelector("#bot-closeup").addEventListener("click", () => {
     cameraFlight.active = true;
     cameraFlight.from.copy(camera.position);
-    cameraFlight.to.set(0, 0.05, 3.00); // 绝佳近景特写
-    cameraFlight.targetTo.set(0, -0.06, 0);
+    cameraFlight.to.set(0, 0.12, 3.35); // 绝佳近景特写（完整呈现头顶天使金环）
+    cameraFlight.targetTo.set(0, 0.02, 0);
     cameraFlight.t = 0;
   });
   document.querySelector("#bot-reset-view").addEventListener("click", () => {
@@ -159,6 +164,7 @@ async function start() {
       bot.engine.showcaseMode = false;
       bot.engine.cycleExpr();
       showcaseButton.textContent = "表情秀";
+      showcaseButton.classList.remove("is-active");
     } else {
       let exprIndex = bot.engine.expression;
       bot.engine.showcaseMode = true;
@@ -166,7 +172,8 @@ async function start() {
         exprIndex = (exprIndex + 1) % 25;
         bot.engine.chooseExpression(exprIndex);
       }, 2000);
-      showcaseButton.textContent = "停止";
+      showcaseButton.textContent = "停止秀";
+      showcaseButton.classList.add("is-active");
     }
   }
   showcaseButton.addEventListener("click", toggleShowcase);
@@ -210,16 +217,23 @@ async function start() {
         if (cameraFlight.t >= 1) cameraFlight.active = false;
       }
 
-      // 气泡投影
-      anchor.copy(bot.group.position);
-      anchor.y += 1.05;
-      anchor.project(camera);
-      if (anchor.z < 1 && anchor.z > -1) {
-        bubble.hidden = false;
-        bubble.style.left = `${((anchor.x * 0.5 + 0.5) * window.innerWidth).toFixed(0)}px`;
-        bubble.style.top = `${((-anchor.y * 0.5 + 0.5) * window.innerHeight).toFixed(0)}px`;
-      } else {
-        bubble.hidden = true;
+      // 气泡投影（处于光环上方留白区，且带屏幕视口安全边界约束）
+      if (!bubble.hidden) {
+        anchor.copy(bot.group.position);
+        anchor.y += 1.16;
+        anchor.project(camera);
+        if (anchor.z < 1 && anchor.z > -1) {
+          const rawLeft = (anchor.x * 0.5 + 0.5) * window.innerWidth;
+          const rawTop = (-anchor.y * 0.5 + 0.5) * window.innerHeight;
+          // 确保气泡在任何特写或大角度缩放下，都不超出屏幕顶部或左右视口
+          const clampLeft = THREE.MathUtils.clamp(rawLeft, 120, window.innerWidth - 120);
+          const clampTop = THREE.MathUtils.clamp(rawTop, 44, window.innerHeight - 90);
+          bubble.style.visibility = "visible";
+          bubble.style.left = `${clampLeft.toFixed(0)}px`;
+          bubble.style.top = `${clampTop.toFixed(0)}px`;
+        } else {
+          bubble.style.visibility = "hidden";
+        }
       }
 
       renderer.render(scene, camera);

@@ -23,6 +23,10 @@ body {
   cursor: grab;
 }
 
+#scene:active {
+  cursor: grabbing;
+}
+
 .brand {
   position: fixed;
   top: 26px;
@@ -104,6 +108,14 @@ body {
   transform: scale(0.94);
 }
 
+.controls button.is-active {
+  background: rgba(199, 151, 63, 0.85);
+  border-color: #ffd84d;
+  color: #1a1612;
+  font-weight: 600;
+  box-shadow: 0 0 14px rgba(255, 216, 77, 0.4);
+}
+
 .hint {
   font-size: 11px;
   color: rgba(244, 241, 234, 0.72);
@@ -128,37 +140,41 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* 台词气泡 */
+/* 台词气泡：象牙烟熏半透玻璃美学，与陶瓷展台自然融合 */
 .bot-bubble {
   position: fixed;
   z-index: 40;
-  transform: translate(-50%, -120%);
+  transform: translate(-50%, -100%);
   padding: 8px 16px;
   border-radius: 16px;
-  background: rgba(30, 28, 26, 0.88);
-  color: #f4f1ea;
-  font: 500 14px/1.5 system-ui, sans-serif;
+  background: rgba(38, 34, 30, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f7f4ee;
+  font: 500 13.5px/1.5 system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.02em;
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.28s ease, transform 0.28s ease;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.32);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
 }
 
 .bot-bubble::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -7px;
+  bottom: -6px;
   transform: translateX(-50%);
-  border: 8px solid transparent;
-  border-top-color: rgba(30, 28, 26, 0.88);
+  border: 6px solid transparent;
+  border-top-color: rgba(38, 34, 30, 0.82);
   border-bottom: 0;
 }
 
 .bot-bubble.show {
   opacity: 1;
-  transform: translate(-50%, -132%);
+  transform: translate(-50%, -115%);
 }
 
 /* 加载 / 错误 */
